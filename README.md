@@ -134,7 +134,6 @@ This repository provides organisational defaults. For personal customisations, f
 ## Resources
 
 - [Chezmoi Documentation](https://www.chezmoi.io/)
-- [Talieisin Engineering Slack](#engineering)
 
 ---
 
