@@ -1,0 +1,118 @@
+# Talieisin Developer Git Configuration
+# This is a chezmoi template
+
+# ============================================================================
+# CORE SETTINGS (shared across all projects)
+# ============================================================================
+
+[core]
+  editor = {{ .editor | default "nano" }}
+  autocrlf = input
+  excludesfile = ~/.gitignore_global
+
+[init]
+  defaultBranch = main
+
+[pull]
+  rebase = false
+
+[push]
+  default = current
+  autoSetupRemote = true
+
+[fetch]
+  prune = true
+
+[diff]
+  colorMoved = zebra
+
+[merge]
+  conflictstyle = diff3
+
+[rebase]
+  autoStash = true
+
+# ============================================================================
+# ALIASES
+# ============================================================================
+
+[alias]
+  st = status -sb
+  lg = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit
+  last = log -1 HEAD --stat
+  cm = commit -m
+  ca = commit --amend
+  cane = commit --amend --no-edit
+  br = branch
+  co = checkout
+  cob = checkout -b
+  cleanup = "!git branch --merged | grep -v '\\*\\|main\\|master\\|develop' | xargs -n 1 git branch -d"
+  undo = reset --soft HEAD^
+  unstage = reset HEAD --
+  df = diff
+  dfc = diff --cached
+  stashes = stash list
+  pop = stash pop
+
+# ============================================================================
+# CREDENTIAL HELPERS
+# ============================================================================
+
+{{- if eq .chezmoi.os "darwin" }}
+[credential]
+  helper = osxkeychain
+{{- else if eq .chezmoi.os "linux" }}
+[credential]
+  helper = cache --timeout=3600
+{{- end }}
+
+[credential "https://github.com"]
+  helper = !/opt/homebrew/bin/gh auth git-credential
+
+[credential "https://gist.github.com"]
+  helper = !/opt/homebrew/bin/gh auth git-credential
+
+# ============================================================================
+# URL SHORTCUTS
+# ============================================================================
+
+[url "git@github.com:"]
+  insteadOf = gh:
+
+[url "https://github.com/"]
+  insteadOf = github:
+
+# ============================================================================
+# IDENTITY CONFIGURATION (via conditional includes)
+# ============================================================================
+# NO default [user] section - force explicit configuration per directory
+# This prevents accidentally committing with the wrong identity
+
+# Personal projects → use personal identity
+[includeIf "gitdir:~/personal/"]
+  path = ~/.gitconfig-personal
+
+[includeIf "gitdir:~/src/personal/"]
+  path = ~/.gitconfig-personal
+
+[includeIf "gitdir:~/Projects/personal/"]
+  path = ~/.gitconfig-personal
+
+[includeIf "gitdir:~/oss/"]
+  path = ~/.gitconfig-personal
+
+# Work projects → use work identity
+[includeIf "gitdir:~/work/"]
+  path = ~/.gitconfig-work
+
+[includeIf "gitdir:~/src/work/"]
+  path = ~/.gitconfig-work
+
+[includeIf "gitdir:~/Projects/Talieisin/"]
+  path = ~/.gitconfig-work
+
+[includeIf "gitdir:~/Projects/work/"]
+  path = ~/.gitconfig-work
+
+# IMPORTANT: Customize these paths to match YOUR directory structure
+# If you clone repos elsewhere, add more includeIf sections

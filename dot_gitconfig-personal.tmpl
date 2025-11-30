@@ -1,0 +1,17 @@
+# Personal Identity Configuration
+# Included by ~/.gitconfig for personal project directories
+
+[user]
+  name = {{ .name | quote }}
+  email = {{ .personal_email | quote }}
+{{- if .personal_gpg_key }}
+  signingkey = {{ .personal_gpg_key }}
+{{- end }}
+
+{{- if .personal_gpg_key }}
+[commit]
+  gpgsign = true
+
+[tag]
+  gpgsign = true
+{{- end }}

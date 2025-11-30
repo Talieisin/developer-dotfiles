@@ -1,0 +1,21 @@
+# Work Identity Configuration
+# Included by ~/.gitconfig for work project directories
+
+[user]
+  name = {{ .name | quote }}
+  email = {{ .email | quote }}
+{{- if .work_gpg_key }}
+  signingkey = {{ .work_gpg_key }}
+{{- end }}
+
+{{- if .work_gpg_key }}
+[commit]
+  gpgsign = true
+
+[tag]
+  gpgsign = true
+{{- end }}
+
+# Work-specific settings
+[url "git@github.com:Talieisin/"]
+  insteadOf = talieisin:

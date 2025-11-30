@@ -1,0 +1,24 @@
+# Chezmoi Ignore File
+# Files and directories to exclude from management
+
+# README (keep only in source)
+README.md
+
+# Encrypted files that shouldn't be managed
+*.asc
+*.gpg
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Editor artifacts
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.bak

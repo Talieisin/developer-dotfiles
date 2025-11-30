@@ -1,0 +1,160 @@
+# Talieisin Developer Zsh Configuration
+# This is a chezmoi template - customize to your preferences
+
+# ============================================================================
+# TALIEISIN ORGANIZATIONAL DEFAULTS
+# ============================================================================
+
+# mise - Runtime version manager
+{{- if eq .chezmoi.os "darwin" }}
+eval "$(mise activate zsh)"
+{{- end }}
+
+# Homebrew
+{{- if eq .chezmoi.os "darwin" }}
+{{-   if eq .chezmoi.arch "arm64" }}
+eval "$(/opt/homebrew/bin/brew shellenv)"
+{{-   else }}
+eval "$(/usr/local/bin/brew shellenv)"
+{{-   end }}
+{{- end }}
+
+# OrbStack - Docker & Linux VMs
+{{- if eq .chezmoi.os "darwin" }}
+# Add OrbStack CLI tools to PATH
+export PATH="$HOME/.orbstack/bin:$PATH"
+{{- end }}
+
+# ============================================================================
+# PERSONAL PREFERENCES (customize below)
+# ============================================================================
+
+# Shell Options
+setopt AUTO_CD              # cd by typing directory name
+setopt INTERACTIVE_COMMENTS # Allow comments in interactive shell
+setopt HIST_IGNORE_DUPS     # Don't record duplicates in history
+setopt SHARE_HISTORY        # Share history between sessions
+
+# History
+HISTSIZE=10000
+SAVEHIST=10000
+HISTFILE=~/.zsh_history
+
+# Completion System
+autoload -Uz compinit
+compinit
+
+# Case-insensitive completion
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
+
+# ============================================================================
+# HOMEBREW PLUGINS (if installed)
+# ============================================================================
+
+# zsh-syntax-highlighting
+{{- if eq .chezmoi.os "darwin" }}
+if [ -f "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+  source "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+fi
+{{- end }}
+
+# zsh-autosuggestions
+{{- if eq .chezmoi.os "darwin" }}
+if [ -f "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+  source "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+fi
+{{- end }}
+
+# ============================================================================
+# ALIASES (customize to your preference)
+# ============================================================================
+
+# Modern CLI replacements (if installed)
+if command -v eza &> /dev/null; then
+  alias ls="eza"
+  alias ll="eza -la"
+  alias tree="eza --tree"
+fi
+
+if command -v bat &> /dev/null; then
+  alias cat="bat"
+fi
+
+if command -v rg &> /dev/null; then
+  alias grep="rg"
+fi
+
+# Git shortcuts
+alias g="git"
+alias gs="git status"
+alias gd="git diff"
+alias gc="git commit"
+alias gp="git push"
+alias gl="git log --oneline --graph"
+
+# Docker/OrbStack
+alias d="docker"
+alias dc="docker compose"
+alias k="kubectl"
+
+# Chezmoi shortcuts
+alias cz="chezmoi"
+alias cze="chezmoi edit"
+alias cza="chezmoi apply"
+alias czd="chezmoi diff"
+
+# ============================================================================
+# FUNCTIONS
+# ============================================================================
+
+# Quick directory navigation
+mkcd() {
+  mkdir -p "$1" && cd "$1"
+}
+
+# Git clone and cd
+gcl() {
+  git clone "$1" && cd "$(basename "$1" .git)"
+}
+
+# ============================================================================
+# ENVIRONMENT VARIABLES
+# ============================================================================
+
+# Editor
+{{- if eq .editor "nvim" }}
+export EDITOR="nvim"
+export VISUAL="nvim"
+{{- else if eq .editor "code" }}
+export EDITOR="code --wait"
+export VISUAL="code --wait"
+{{- else }}
+export EDITOR="nano"
+export VISUAL="nano"
+{{- end }}
+
+# Less options
+export LESS="-R -F -X"
+
+# Colorized man pages
+export MANPAGER="less -R --use-color -Dd+r -Du+b"
+
+# ============================================================================
+# OPTIONAL: Load company-wide aliases (if provided)
+# ============================================================================
+
+[ -f ~/.talieisin_aliases ] && source ~/.talieisin_aliases
+
+# ============================================================================
+# OPTIONAL: Load machine-specific config
+# ============================================================================
+
+[ -f ~/.zshrc.local ] && source ~/.zshrc.local
+
+# ============================================================================
+# PROMPT (customize or use a framework like Starship/Oh-My-Zsh)
+# ============================================================================
+
+# Simple prompt (customize to your preference)
+# or use: eval "$(starship init zsh)"
+PROMPT='%F{cyan}%~%f %F{green}❯%f '

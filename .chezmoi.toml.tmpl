@@ -1,0 +1,29 @@
+# Chezmoi Configuration
+# This file goes in ~/.config/chezmoi/chezmoi.toml
+# It provides variables used in your dotfile templates
+
+[data]
+  # Your name (same for work and personal)
+  name = "{{ .chezmoi.username }}"  # Or set manually: "Your Name"
+
+  # Work email (Talieisin)
+  email = "{{ .chezmoi.username }}@talieisin.com"
+
+  # Personal email (for personal projects)
+  personal_email = "your.personal@email.com"  # CHANGE THIS
+
+  # Editor preference
+  editor = "nano"  # Options: nano, nvim, vim, code, etc.
+
+  # GPG Keys (optional - leave empty if not using signed commits)
+  work_gpg_key = ""      # Your work GPG key ID (e.g., "ABC123DEF456")
+  personal_gpg_key = ""  # Your personal GPG key ID
+
+# Example with GPG keys configured:
+# [data]
+#   name = "Jane Developer"
+#   email = "jane.developer@talieisin.com"
+#   personal_email = "jane@personal.com"
+#   editor = "nvim"
+#   work_gpg_key = "A1B2C3D4E5F6G7H8"
+#   personal_gpg_key = "Z9Y8X7W6V5U4T3S2"
