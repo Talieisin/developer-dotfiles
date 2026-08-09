@@ -32,7 +32,7 @@ chezmoi init --apply Talieisin/developer-dotfiles
 
 During `chezmoi init`, you'll be prompted for:
 - Your name
-- Work email (defaults to username@talieisin.com)
+- Work email (defaults to username@talieisin.co.uk)
 - Personal email
 - Editor preference (nano, nvim, vim, code)
 - GPG keys (optional)

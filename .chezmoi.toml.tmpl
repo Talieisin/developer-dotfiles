@@ -1,29 +1,37 @@
+{{- $name := promptStringOnce . "name" "Full name (for git commits)" -}}
+{{- $email := promptStringOnce . "email" "Work email" (printf "%s@talieisin.co.uk" .chezmoi.username) -}}
+{{- $personalEmail := promptStringOnce . "personal_email" "Personal email (for personal projects)" -}}
+{{- $editor := promptStringOnce . "editor" "Preferred editor (nano/vim/nvim/code)" "nano" -}}
+{{- $workGpgKey := promptStringOnce . "work_gpg_key" "Work GPG signing key ID (empty for no signing)" "" -}}
+{{- $personalGpgKey := promptStringOnce . "personal_gpg_key" "Personal GPG signing key ID (empty for no signing)" "" -}}
+{{- $gcloudProject := promptStringOnce . "gcloud_project" "Google Cloud project for GenAI/Vertex (empty to skip)" "" -}}
+{{- $gcloudLocation := promptStringOnce . "gcloud_location" "Google Cloud location" "europe-west2" }}
 # Chezmoi Configuration
-# This file goes in ~/.config/chezmoi/chezmoi.toml
-# It provides variables used in your dotfile templates
+# Rendered to ~/.config/chezmoi/chezmoi.toml on `chezmoi init`.
+# Prompts fire once (answers persist in the rendered config); re-run
+# `chezmoi init` to re-render after editing this template.
 
 [data]
-  # Your name (same for work and personal)
-  name = "{{ .chezmoi.username }}"  # Or set manually: "Your Name"
+  name = {{ $name | quote }}
+  email = {{ $email | quote }}
+  personal_email = {{ $personalEmail | quote }}
+  editor = {{ $editor | quote }}
+  work_gpg_key = {{ $workGpgKey | quote }}
+  personal_gpg_key = {{ $personalGpgKey | quote }}
+  gcloud_project = {{ $gcloudProject | quote }}
+  gcloud_location = {{ $gcloudLocation | quote }}
 
-  # Work email (Talieisin)
-  email = "{{ .chezmoi.username }}@talieisin.com"
-
-  # Personal email (for personal projects)
-  personal_email = "your.personal@email.com"  # CHANGE THIS
-
-  # Editor preference
-  editor = "nano"  # Options: nano, nvim, vim, code, etc.
-
-  # GPG Keys (optional - leave empty if not using signed commits)
-  work_gpg_key = ""      # Your work GPG key ID (e.g., "ABC123DEF456")
-  personal_gpg_key = ""  # Your personal GPG key ID
-
-# Example with GPG keys configured:
-# [data]
-#   name = "Jane Developer"
-#   email = "jane.developer@talieisin.com"
-#   personal_email = "jane@personal.com"
-#   editor = "nvim"
-#   work_gpg_key = "A1B2C3D4E5F6G7H8"
-#   personal_gpg_key = "Z9Y8X7W6V5U4T3S2"
+  # Git identity routing (consumed by dot_gitconfig.tmpl). Directories in
+  # neither list get NO identity — git fails loudly rather than mis-attributing.
+  # Extend these in your fork to match your directory layout.
+  work_dirs = [
+    "~/work/",
+    "~/src/work/",
+    "~/Projects/Talieisin/",
+    "~/Projects/work/",
+  ]
+  personal_dirs = [
+    "~/personal/",
+    "~/src/personal/",
+    "~/Projects/personal/",
+  ]

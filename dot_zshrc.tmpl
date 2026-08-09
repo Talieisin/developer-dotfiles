@@ -1,35 +1,42 @@
 # Talieisin Developer Zsh Configuration
 # This is a chezmoi template - customize to your preferences
+#
+# Ordering matters:
+#   brew shellenv → PATH additions → options/completions → aliases/env →
+#   secrets/local hooks → mise activate → prompt → plugins
+#   (zsh-syntax-highlighting must stay literally last).
+
+{{- $brewPrefix := "/usr/local" -}}
+{{- if eq .chezmoi.arch "arm64" }}{{ $brewPrefix = "/opt/homebrew" }}{{ end }}
 
 # ============================================================================
-# TALIEISIN ORGANIZATIONAL DEFAULTS
+# HOMEBREW (must come first — everything below may live in its prefix)
 # ============================================================================
 
-# mise - Runtime version manager
-{{- if eq .chezmoi.os "darwin" }}
-eval "$(mise activate zsh)"
+{{ if eq .chezmoi.os "darwin" -}}
+eval "$({{ $brewPrefix }}/bin/brew shellenv)"
 {{- end }}
 
-# Homebrew
-{{- if eq .chezmoi.os "darwin" }}
-{{-   if eq .chezmoi.arch "arm64" }}
-eval "$(/opt/homebrew/bin/brew shellenv)"
-{{-   else }}
-eval "$(/usr/local/bin/brew shellenv)"
-{{-   end }}
-{{- end }}
+# ============================================================================
+# PATH ADDITIONS & TOOL HOMES
+# ============================================================================
 
+{{ if eq .chezmoi.os "darwin" -}}
 # OrbStack - Docker & Linux VMs
-{{- if eq .chezmoi.os "darwin" }}
-# Add OrbStack CLI tools to PATH
 export PATH="$HOME/.orbstack/bin:$PATH"
 {{- end }}
 
+# pipx / uv tools
+export PATH="$PATH:$HOME/.local/bin"
+
+# Go binaries
+export GOPATH="$HOME/go"
+export PATH="$PATH:$GOPATH/bin"
+
 # ============================================================================
-# PERSONAL PREFERENCES (customize below)
+# SHELL OPTIONS
 # ============================================================================
 
-# Shell Options
 setopt AUTO_CD              # cd by typing directory name
 setopt INTERACTIVE_COMMENTS # Allow comments in interactive shell
 setopt HIST_IGNORE_DUPS     # Don't record duplicates in history
@@ -40,29 +47,27 @@ HISTSIZE=10000
 SAVEHIST=10000
 HISTFILE=~/.zsh_history
 
-# Completion System
+# ============================================================================
+# COMPLETION SYSTEM (cached dump, skip audit on subsequent loads)
+# ============================================================================
+
+fpath=("$HOME/.zsh/completions" $fpath)
+mkdir -p "$HOME/.cache/zsh"
 autoload -Uz compinit
-compinit
+compinit -C -d "$HOME/.cache/zsh/zcompdump"
 
 # Case-insensitive completion
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
 
-# ============================================================================
-# HOMEBREW PLUGINS (if installed)
-# ============================================================================
+# Bash-style completions (aws)
+autoload bashcompinit && bashcompinit
 
-# zsh-syntax-highlighting
-{{- if eq .chezmoi.os "darwin" }}
-if [ -f "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
-  source "$(brew --prefix)/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
-fi
-{{- end }}
-
-# zsh-autosuggestions
-{{- if eq .chezmoi.os "darwin" }}
-if [ -f "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
-  source "$(brew --prefix)/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
-fi
+# Tool completions (guarded — only when the tool is installed)
+command -v kubectl &> /dev/null && source <(kubectl completion zsh)
+command -v helm &> /dev/null && source <(helm completion zsh)
+command -v ionosctl &> /dev/null && source <(ionosctl completion zsh)
+{{ if eq .chezmoi.os "darwin" -}}
+[ -x "{{ $brewPrefix }}/bin/aws_completer" ] && complete -C '{{ $brewPrefix }}/bin/aws_completer' aws
 {{- end }}
 
 # ============================================================================
@@ -80,9 +85,9 @@ if command -v bat &> /dev/null; then
   alias cat="bat"
 fi
 
-if command -v rg &> /dev/null; then
-  alias grep="rg"
-fi
+# rg is available directly; aliasing grep→rg changes flag semantics, so it is
+# deliberately NOT aliased. Uncomment if you prefer it:
+# command -v rg &> /dev/null && alias grep="rg"
 
 # Git shortcuts
 alias g="git"
@@ -114,7 +119,7 @@ mkcd() {
 
 # Git clone and cd
 gcl() {
-  git clone "$1" && cd "$(basename "$1" .git)"
+  git clone "$1" && cd "$(basename "${1%/}" .git)"
 }
 
 # ============================================================================
@@ -122,12 +127,12 @@ gcl() {
 # ============================================================================
 
 # Editor
-{{- if eq .editor "nvim" }}
-export EDITOR="nvim"
-export VISUAL="nvim"
-{{- else if eq .editor "code" }}
+{{- if eq .editor "code" }}
 export EDITOR="code --wait"
 export VISUAL="code --wait"
+{{- else if .editor }}
+export EDITOR="{{ .editor }}"
+export VISUAL="{{ .editor }}"
 {{- else }}
 export EDITOR="nano"
 export VISUAL="nano"
@@ -138,6 +143,28 @@ export LESS="-R -F -X"
 
 # Colorized man pages
 export MANPAGER="less -R --use-color -Dd+r -Du+b"
+
+{{- if .gcloud_project }}
+
+# Google GenAI via Vertex (non-secret, machine-parameterised via chezmoi data)
+export GOOGLE_GENAI_USE_VERTEXAI=true
+export GOOGLE_CLOUD_PROJECT={{ .gcloud_project | quote }}
+export GOOGLE_CLOUD_LOCATION={{ .gcloud_location | quote }}
+{{- end }}
+
+{{ if eq .chezmoi.os "darwin" -}}
+# IONOS Token - auto-extracted from ionosctl config at runtime (never stored here)
+if [ -f "$HOME/Library/Application Support/ionosctl/config.yaml" ]; then
+    export IONOS_TOKEN=$(grep "token:" "$HOME/Library/Application Support/ionosctl/config.yaml" | awk '{print $2}')
+fi
+{{- end }}
+
+# ============================================================================
+# SECRETS (optional — point your secret store's output here; never commit
+# plaintext secrets to any dotfiles repo)
+# ============================================================================
+
+[ -f ~/.config/zsh/secrets.zsh ] && source ~/.config/zsh/secrets.zsh
 
 # ============================================================================
 # OPTIONAL: Load company-wide aliases (if provided)
@@ -152,9 +179,41 @@ export MANPAGER="less -R --use-color -Dd+r -Du+b"
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
 
 # ============================================================================
-# PROMPT (customize or use a framework like Starship/Oh-My-Zsh)
+# RUNTIME MANAGER (mise) — late so nothing above shadows its PATH entries
 # ============================================================================
 
-# Simple prompt (customize to your preference)
-# or use: eval "$(starship init zsh)"
-PROMPT='%F{cyan}%~%f %F{green}❯%f '
+if command -v mise &> /dev/null; then
+  eval "$(mise activate zsh)"
+fi
+
+# ============================================================================
+# INTERACTIVE TOOLING (if installed)
+# ============================================================================
+
+command -v fzf &> /dev/null && source <(fzf --zsh)
+command -v zoxide &> /dev/null && eval "$(zoxide init zsh)"
+command -v direnv &> /dev/null && eval "$(direnv hook zsh)"
+
+# ============================================================================
+# PROMPT (before plugins — zsh-syntax-highlighting must stay literally last)
+# ============================================================================
+
+if command -v starship &> /dev/null; then
+  eval "$(starship init zsh)"
+else
+  PROMPT='%F{cyan}%~%f %F{green}❯%f '
+fi
+
+# ============================================================================
+# ZSH PLUGINS (syntax-highlighting sourced LAST per its INSTALL.md)
+# ============================================================================
+
+{{ if eq .chezmoi.os "darwin" -}}
+if [ -f "{{ $brewPrefix }}/share/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+  source "{{ $brewPrefix }}/share/zsh-autosuggestions/zsh-autosuggestions.zsh"
+fi
+
+if [ -f "{{ $brewPrefix }}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+  source "{{ $brewPrefix }}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+fi
+{{- end }}
