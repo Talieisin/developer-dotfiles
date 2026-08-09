@@ -54,7 +54,11 @@ HISTFILE=~/.zsh_history
 fpath=("$HOME/.zsh/completions" $fpath)
 mkdir -p "$HOME/.cache/zsh"
 autoload -Uz compinit
-compinit -C -d "$HOME/.cache/zsh/zcompdump"
+if [ -f "$HOME/.cache/zsh/zcompdump" ]; then
+  compinit -C -d "$HOME/.cache/zsh/zcompdump"   # cache exists: skip audit
+else
+  compinit -d "$HOME/.cache/zsh/zcompdump"      # first run: full audit
+fi
 
 # Case-insensitive completion
 zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={A-Za-z}'
@@ -152,10 +156,11 @@ export GOOGLE_CLOUD_PROJECT={{ .gcloud_project | quote }}
 export GOOGLE_CLOUD_LOCATION={{ .gcloud_location | quote }}
 {{- end }}
 
-{{ if eq .chezmoi.os "darwin" -}}
-# IONOS Token - auto-extracted from ionosctl config at runtime (never stored here)
+{{ if and (eq .chezmoi.os "darwin") (default false (get . "ionos_token_export")) -}}
+# IONOS Token - derived from ionosctl config at runtime (opt-in via the
+# ionos_token_export data flag; never stored in this file)
 if [ -f "$HOME/Library/Application Support/ionosctl/config.yaml" ]; then
-    export IONOS_TOKEN=$(grep "token:" "$HOME/Library/Application Support/ionosctl/config.yaml" | awk '{print $2}')
+    export IONOS_TOKEN=$(awk -F': *' '/^token:/ {gsub(/"/, "", $2); print $2; exit}' "$HOME/Library/Application Support/ionosctl/config.yaml")
 fi
 {{- end }}
 

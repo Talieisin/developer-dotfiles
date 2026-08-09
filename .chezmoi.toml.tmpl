@@ -5,7 +5,10 @@
 {{- $workGpgKey := promptStringOnce . "work_gpg_key" "Work GPG signing key ID (empty for no signing)" "" -}}
 {{- $personalGpgKey := promptStringOnce . "personal_gpg_key" "Personal GPG signing key ID (empty for no signing)" "" -}}
 {{- $gcloudProject := promptStringOnce . "gcloud_project" "Google Cloud project for GenAI/Vertex (empty to skip)" "" -}}
-{{- $gcloudLocation := promptStringOnce . "gcloud_location" "Google Cloud location" "europe-west2" }}
+{{- $gcloudLocation := "" -}}
+{{- if $gcloudProject -}}
+{{- $gcloudLocation = promptStringOnce . "gcloud_location" "Google Cloud location" "europe-west2" -}}
+{{- end }}
 # Chezmoi Configuration
 # Rendered to ~/.config/chezmoi/chezmoi.toml on `chezmoi init`.
 # Prompts fire once (answers persist in the rendered config); re-run

@@ -130,13 +130,13 @@
 # Directory lists come from [data] in ~/.config/chezmoi/chezmoi.toml.
 
 # Personal projects → personal identity
-{{- range .personal_dirs }}
+{{- range default list (get . "personal_dirs") }}
 [includeIf "gitdir:{{ . }}"]
   path = ~/.gitconfig-personal
 {{- end }}
 
 # Work projects → work identity
-{{- range .work_dirs }}
+{{- range default list (get . "work_dirs") }}
 [includeIf "gitdir:{{ . }}"]
   path = ~/.gitconfig-work
 {{- end }}
