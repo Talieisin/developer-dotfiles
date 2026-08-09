@@ -1,6 +1,9 @@
 # Work Identity Configuration
 # Included by ~/.gitconfig for work project directories
 
+{{- $brewPrefix := "/usr/local" -}}
+{{- if eq .chezmoi.arch "arm64" }}{{ $brewPrefix = "/opt/homebrew" }}{{ end }}
+
 [user]
   name = {{ .name | quote }}
   email = {{ .email | quote }}
@@ -9,11 +12,18 @@
 {{- end }}
 
 {{- if .work_gpg_key }}
+
 [commit]
   gpgsign = true
 
 [tag]
   gpgsign = true
+
+{{- if eq .chezmoi.os "darwin" }}
+
+[gpg]
+  program = {{ $brewPrefix }}/bin/gpg
+{{- end }}
 {{- end }}
 
 # Work-specific settings

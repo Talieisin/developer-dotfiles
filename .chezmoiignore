@@ -1,8 +1,12 @@
 # Chezmoi Ignore File
 # Files and directories to exclude from management
 
-# README (keep only in source)
+# Repo-level docs and metadata (no dot prefix, so without these entries
+# chezmoi would deploy them to $HOME — including ~/CLAUDE.md, which AI
+# tooling reads as global instructions)
 README.md
+CLAUDE.md
+LICENSE
 
 # Encrypted files that shouldn't be managed
 *.asc

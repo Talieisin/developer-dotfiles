@@ -6,7 +6,13 @@
 # ============================================================================
 
 [core]
-  editor = {{ .editor | default "nano" }}
+{{- if eq .editor "code" }}
+  editor = code --wait
+{{- else if .editor }}
+  editor = {{ .editor }}
+{{- else }}
+  editor = nano
+{{- end }}
   autocrlf = input
   excludesfile = ~/.gitignore_global
 
@@ -46,7 +52,7 @@
   br = branch
   co = checkout
   cob = checkout -b
-  cleanup = "!git branch --merged | grep -v '\\*\\|main\\|master\\|develop' | xargs -n 1 git branch -d"
+  cleanup = "!git branch --merged | grep -vE '^\\*|^[+ ]*(main|master|develop)$' | xargs -n 1 git branch -d"
   undo = reset --soft HEAD^
   unstage = reset HEAD --
   df = diff
@@ -59,18 +65,52 @@
 # ============================================================================
 
 {{- if eq .chezmoi.os "darwin" }}
+
 [credential]
   helper = osxkeychain
 {{- else if eq .chezmoi.os "linux" }}
+
 [credential]
   helper = cache --timeout=3600
 {{- end }}
 
+# gh resolved from PATH — works on any OS/arch with gh installed.
+# The empty `helper =` clears the inherited global helper so gh is authoritative
+# for github.com (helpers are cumulative otherwise).
 [credential "https://github.com"]
-  helper = !/opt/homebrew/bin/gh auth git-credential
+  helper =
+  helper = !gh auth git-credential
 
 [credential "https://gist.github.com"]
-  helper = !/opt/homebrew/bin/gh auth git-credential
+  helper =
+  helper = !gh auth git-credential
+
+# ============================================================================
+# DIFF/MERGE TOOLS (only when installed)
+# ============================================================================
+
+{{- if lookPath "ksdiff" }}
+
+[diff]
+  tool = Kaleidoscope
+
+[difftool "Kaleidoscope"]
+  cmd = ksdiff --partial-changeset --relative-path \"$MERGED\" -- \"$LOCAL\" \"$REMOTE\"
+
+[difftool]
+  prompt = false
+  trustExitCode = true
+
+[merge]
+  tool = Kaleidoscope
+
+[mergetool "Kaleidoscope"]
+  cmd = ksdiff --merge --output \"$MERGED\" --base \"$BASE\" -- \"$LOCAL\" --snapshot \"$REMOTE\" --snapshot
+  trustExitCode = true
+
+[mergetool]
+  prompt = false
+{{- end }}
 
 # ============================================================================
 # URL SHORTCUTS
@@ -86,30 +126,17 @@
 # IDENTITY CONFIGURATION (via conditional includes)
 # ============================================================================
 # NO default [user] section - force explicit configuration per directory
-# This prevents accidentally committing with the wrong identity
+# This prevents accidentally committing with the wrong identity.
+# Directory lists come from [data] in ~/.config/chezmoi/chezmoi.toml.
 
-# Personal projects → use personal identity
-[includeIf "gitdir:~/personal/"]
+# Personal projects → personal identity
+{{- range default list (get . "personal_dirs") }}
+[includeIf "gitdir:{{ . }}"]
   path = ~/.gitconfig-personal
+{{- end }}
 
-[includeIf "gitdir:~/src/personal/"]
-  path = ~/.gitconfig-personal
-
-[includeIf "gitdir:~/Projects/personal/"]
-  path = ~/.gitconfig-personal
-
-# Work projects → use work identity
-[includeIf "gitdir:~/work/"]
+# Work projects → work identity
+{{- range default list (get . "work_dirs") }}
+[includeIf "gitdir:{{ . }}"]
   path = ~/.gitconfig-work
-
-[includeIf "gitdir:~/src/work/"]
-  path = ~/.gitconfig-work
-
-[includeIf "gitdir:~/Projects/Talieisin/"]
-  path = ~/.gitconfig-work
-
-[includeIf "gitdir:~/Projects/work/"]
-  path = ~/.gitconfig-work
-
-# IMPORTANT: Customize these paths to match YOUR directory structure
-# If you clone repos elsewhere, add more includeIf sections
+{{- end }}
