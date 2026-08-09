@@ -1,0 +1,6 @@
+# False positives: the documentation EXAMPLE GPG key IDs ("A1B2C3D4E5F6G7H8")
+# in the initial commit's .chezmoi.toml.tmpl comment block. Not real secrets —
+# but they live in git history forever, so every full-history scan trips on
+# them without these fingerprints.
+ddb8540919854a08beca4505f3caa8ecf6f55eb6:.chezmoi.toml.tmpl:generic-api-key:28
+ddb8540919854a08beca4505f3caa8ecf6f55eb6:.chezmoi.toml.tmpl:generic-api-key:29
