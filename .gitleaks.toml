@@ -1,0 +1,18 @@
+# Secret-scan policy. The org secret-scan workflow rejects .gitleaksignore, so
+# every suppression lives here, in one reviewed file.
+
+[extend]
+useDefault = true
+
+# False positive: documentation placeholder GPG key IDs in the example [data]
+# comment block of .chezmoi.toml.tmpl, as committed in the initial commit.
+# They are made-up sequences (not even hex, so not valid key IDs). Pinned to
+# that commit, that file, the one rule and the two literal placeholders, so
+# nothing else in the file or its history is suppressed.
+[[allowlists]]
+description = "Placeholder GPG key IDs in the .chezmoi.toml.tmpl example block (initial commit)"
+condition = "AND"
+targetRules = ["generic-api-key"]
+commits = ["ddb8540919854a08beca4505f3caa8ecf6f55eb6"]
+paths = ['''^\.chezmoi\.toml\.tmpl$''']
+regexes = ['''^(A1B2C3D4E5F6G7H8|Z9Y8X7W6V5U4T3S2)$''']
